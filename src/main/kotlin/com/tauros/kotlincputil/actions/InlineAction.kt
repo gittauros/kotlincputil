@@ -134,6 +134,7 @@ class InlineAction : AnAction() {
         val inlinedList = refElements.toList().sortedBy { it.getKotlinFqName().toString() }
         val code = buildString {
             for (child in psiFile.children) {
+                if (child is KtPackageDirective) continue
                 if (child is KtImportList) {
                     for (import in keepImports) {
                         append("import ")
