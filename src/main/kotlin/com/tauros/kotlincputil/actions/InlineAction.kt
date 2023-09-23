@@ -111,6 +111,8 @@ class InlineAction : AnAction() {
                 }
             }
         }
+        val doubleCheckElements = ArrayDeque<PsiElement>()
+        val refFiles = mutableSetOf<KtFile>()
         while (collectQueue.isNotEmpty()) {
             visitAllKtElements(collectQueue.removeFirst(), collectExpression)
             while (fileQueue.isNotEmpty()) {
@@ -127,10 +129,26 @@ class InlineAction : AnAction() {
                         keepImports.add(name)
                     } else {
                         refElements.addFirst(curUncertain)
+                        var topFile: PsiElement? = curUncertain
+                        while (topFile != null && topFile !is KtFile) {
+                            topFile = topFile.parent
+                        }
+                        if (topFile is KtFile) {
+                            refFiles.add(topFile)
+                        }
                     }
+                } else {
+                    doubleCheckElements.addLast(curUncertain)
                 }
             }
         }
+        doubleCheckElements.filter {
+            var eleFile: PsiElement? = it
+            while (eleFile != null && eleFile !is KtFile) {
+                eleFile = eleFile.parent
+            }
+            eleFile is KtFile && eleFile in refFiles
+        }.forEach(refElements::add)
         val inlinedList = refElements.toList().sortedBy { it.getKotlinFqName().toString() }
         val code = buildString {
             for (child in psiFile.children) {
@@ -202,6 +220,7 @@ class InlineAction : AnAction() {
 
                     is KtReferenceExpression -> {
                         element.resolve()?.also(visitExpression)
+                        element.children.forEach { it.accept(this) }
                     }
 
                     else -> element.children.forEach { it.accept(this) }
