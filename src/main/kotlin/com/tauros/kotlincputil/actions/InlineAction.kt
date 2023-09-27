@@ -129,16 +129,18 @@ class InlineAction : AnAction() {
                         keepImports.add(name)
                     } else {
                         refElements.addFirst(curUncertain)
-                        var topFile: PsiElement? = curUncertain
-                        while (topFile != null && topFile !is KtFile) {
-                            topFile = topFile.parent
-                        }
-                        if (topFile is KtFile) {
-                            refFiles.add(topFile)
-                        }
                     }
                 } else {
                     doubleCheckElements.addLast(curUncertain)
+                }
+                if (keepPackagePrefixes.none { name.startsWith(it) }) {
+                    var topFile: PsiElement? = curUncertain
+                    while (topFile != null && topFile !is KtFile) {
+                        topFile = topFile.parent
+                    }
+                    if (topFile is KtFile && topFile != psiFile) {
+                        refFiles.add(topFile)
+                    }
                 }
             }
         }
@@ -223,7 +225,9 @@ class InlineAction : AnAction() {
                         element.children.forEach { it.accept(this) }
                     }
 
-                    else -> element.children.forEach { it.accept(this) }
+                    else -> element.children.forEach {
+                        it.accept(this)
+                    }
                 }
             }
         }
