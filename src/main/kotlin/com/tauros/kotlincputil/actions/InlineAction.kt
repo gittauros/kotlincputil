@@ -61,6 +61,36 @@ class InlineAction : AnAction() {
         collectQueue.add(psiFile)
         val collectExpression: (PsiElement) -> Unit = { resolved ->
             when (resolved) {
+                is KtTypeAlias -> {
+                    if (resolved !in elementSet) {
+                        uncertainElements.addLast(resolved)
+                        elementSet.add(resolved)
+                        var iter = resolved.parent
+                        while (iter !is KtFile) iter = iter.parent
+                        val ktFile = iter
+                        if (ktFile !in fileSet) {
+                            fileSet.add(ktFile)
+                            fileQueue.addLast(ktFile)
+                        }
+                        collectQueue.addLast(resolved)
+                    }
+                }
+
+                is KtClass -> {
+                    if (resolved !in elementSet) {
+                        uncertainElements.addLast(resolved)
+                        elementSet.add(resolved)
+                        var iter = resolved.parent
+                        while (iter !is KtFile) iter = iter.parent
+                        val ktFile = iter
+                        if (ktFile !in fileSet) {
+                            fileSet.add(ktFile)
+                            fileQueue.addLast(ktFile)
+                        }
+                        collectQueue.addLast(resolved)
+                    }
+                }
+
                 is KtConstructor<*> -> {
                     var iter = resolved.parent;
                     while (iter !is KtClass) {
@@ -167,7 +197,7 @@ class InlineAction : AnAction() {
                             makeElementText(inlined)
                             append('\n')
                         }
-                    }.trimEnd('\n'))
+                    })
                 } else {
                     makeElementText(child)
                 }
@@ -201,7 +231,9 @@ class InlineAction : AnAction() {
             }
             append('\n')
         } else {
-            append(element.text)
+            val elementCode = element.text.trimEnd('\n')
+            append(elementCode)
+            append('\n')
         }
     }
 
