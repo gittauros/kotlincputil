@@ -1,8 +1,6 @@
-import org.jetbrains.kotlin.ir.backend.js.compile
-
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.7.20"
+    id("org.jetbrains.kotlin.jvm") version "1.8.22"
     id("org.jetbrains.intellij") version "1.14.1"
 }
 
@@ -11,9 +9,6 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
-}
-
-dependencies {
 }
 
 // Configure Gradle IntelliJ Plugin
