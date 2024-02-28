@@ -8,9 +8,13 @@ import com.intellij.psi.*
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.refactoring.hostEditor
+import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
+import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.nj2k.postProcessing.resolve
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
+import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
+import org.jetbrains.kotlin.resolve.source.getPsi
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 
@@ -206,11 +210,11 @@ class InlineAction : AnAction() {
             if (isNotBlank() && last() != '\n') {
                 append('\n')
             }
-        }
+        }.trim('\n')
         val selection = StringSelection(code)
         Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, selection)
         Messages.showMessageDialog(
-            e.project!!, "copied!", "inlined code generated",
+            e.project!!, "Copied!", "Inlined Code",
             Messages.getInformationIcon()
         );
     }
@@ -262,6 +266,12 @@ class InlineAction : AnAction() {
 
                     is KtReferenceExpression -> {
                         element.resolve()?.also(visitExpression)
+                        val descriptors = element.resolveMainReferenceToDescriptors()
+                        for (descriptor in descriptors) {
+                            val importable = descriptor.getImportableDescriptor()
+                            val sourceElement = importable.toSourceElement
+                            sourceElement.getPsi()?.also(visitExpression)
+                        }
                         element.children.forEach { it.accept(this) }
                     }
 
