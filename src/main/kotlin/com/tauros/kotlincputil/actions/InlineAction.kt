@@ -131,6 +131,9 @@ class InlineAction : AnAction() {
                     if ((iter is PsiClass || iter is KtClass) && iter !in elementSet) {
                         elementSet.add(iter)
                         uncertainElements.addLast(iter)
+                        if (iter is KtClass) {
+                            collectQueue.addLast(iter)
+                        }
                     }
                 }
             }
